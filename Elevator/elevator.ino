@@ -1,6 +1,7 @@
 // An elevator that reads inputs from buttonArray, stores it into an array and turns on and off lights symbolizing the elevator
+// Floor numbers start at 1
 
-// buttons - for calling the elevator
+// Buttons - for calling the elevator
 const int button_1 = A0;
 const int button_2 = A1;
 const int button_3 = A2;
@@ -27,8 +28,9 @@ const int elevatorLED_5 = 12;
 const int elevatorLED_6 = 13;
 const int elevatorLEDArray[] = {elevatorLED_1, elevatorLED_2, elevatorLED_3, elevatorLED_4, elevatorLED_5, elevatorLED_6};
 
-const int queueSize = 6;
-int elevatorQueue[queueSize];
+// Queue Logic
+const int queueSize = 6; // Equal to the number of floors
+int elevatorQueue[queueSize]; // Initializes a queue the same size as the number of floors
 int elevatorPosition = 1; // Starts on first floor
 
 // Functions
@@ -64,10 +66,10 @@ void setElevatorLEDOn(int floorNumber) {
   }
 }
 
-void moveElevator(int floorNumber) {
-  int direction = floorNumber > elevatorPosition ? 1 : -1;
-  int floorsDifference = abs(floorNumber - elevatorPosition);
-  if (floorNumber >= 1 && floorNumber <= queueSize) {
+void moveElevator(int destinationFloorNumber) {
+  int direction = destinationFloorNumber > elevatorPosition ? 1 : -1; // 1 if the elevator has to move up, -1 if it has to move down
+  int floorsDifference = abs(destinationFloorNumber - elevatorPosition);
+  if (destinationFloorNumber >= 1 && destinationFloorNumber <= queueSize) {
     // Read all buttons while moving
     for (int i = 0; i < floorsDifference; i++) { // For each floor the elevator has to travel
       for (int i = 0; i < queueSize; i++) { // For each button in the system
@@ -89,11 +91,10 @@ void moveElevator(int floorNumber) {
     }
     delay(1000); // Resting time between queue items (i.e: doors open and close)
   }
-  digitalWrite(buttonLEDArray[floorNumber-1], LOW); // Turns off the floor light in which the elevator stopped
+  digitalWrite(buttonLEDArray[destinationFloorNumber-1], LOW); // Turns off the floor light in which the elevator stopped
 }
 
-void setup()
-{
+void setup() {
   pinMode(elevatorLED_1, OUTPUT);
   pinMode(elevatorLED_2, OUTPUT);
   pinMode(elevatorLED_3, OUTPUT);
@@ -115,21 +116,25 @@ void setup()
   Serial.begin(9600);
 }
 
-void loop()
-{
-  setElevatorLEDOn(elevatorPosition); // Turns on the starting point
+void loop() {
+  // Elevator starts always at the ground floor --> 1
+  setElevatorLEDOn(elevatorPosition);
   
-  // Read all buttonArray
+  // Read all buttonArray looking for button calls to add to the queue
   for (int i = 0; i < queueSize; i++) {
     if (digitalRead(buttonArray[i]) == HIGH) {
       addToQueue(i + 1);
     }
   }
+
+  // Move the elevator to the first position in the queue
   moveElevator(elevatorQueue[0]);
+  
+  // Update queue moving all elements one position ahead
   removeFirstFromQueue();
-  // Print queue status
+
+  // Print queue status (just for debugging and better understanding)
   for (int i = 0; i < queueSize; i++) {
-    Serial.print(elevatorQueue[i]);
+    Serial.println(elevatorQueue[i]);
   }
-  Serial.println();
 }
